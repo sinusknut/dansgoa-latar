@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PLAYLIST="${DANSGOA_PLAYLIST:-$SCRIPT_DIR/dansgoa.m3u}"
+
+if ! command -v mpv >/dev/null 2>&1; then
+    echo "Error: mpv is not installed." >&2
+    exit 1
+fi
+
+if ! command -v yt-dlp >/dev/null 2>&1; then
+    echo "Error: yt-dlp is not installed." >&2
+    exit 1
+fi
+
+if [[ ! -f "$PLAYLIST" ]]; then
+    echo "Error: playlist not found: $PLAYLIST" >&2
+    exit 1
+fi
+
+args=(
+    --hwdec=auto
+    "--ytdl-format=bestvideo[vcodec^=avc1]+bestaudio/best[vcodec^=avc1]"
+    "--playlist=$PLAYLIST"
+)
+
+case "${1:-}" in
+    --shuffle|-s)
+        args+=(--shuffle)
+        shift
+        ;;
+    --help|-h)
+        cat <<'EOF'
+Usage: dansgoa [--shuffle|-s] [mpv options...]
+
+Play the Dansgoa låtar playlist with mpv and yt-dlp.
+
+Options:
+  -s, --shuffle   Shuffle playlist order
+  -h, --help      Show this help
+EOF
+        exit 0
+        ;;
+esac
+
+exec mpv "${args[@]}" "$@"
